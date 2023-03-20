@@ -1,0 +1,54 @@
+name: Create Release
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
+      - name: build release archives
+        run: make
+      - name: create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Commander ${{ github.ref }}
+          body: Commander ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: upload zip archive
+        id: upload-zip-archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/commander.zip
+          asset_name: commander.zip
+          asset_content_type: application/zip
+      - name: upload tar.gz archive
+        id: upload-targz-archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/commander.tar.gz
+          asset_name: commander.tar.gz
+          asset_content_type: application/x-gtar
+      - name: upload tar.xz archive
+        id: upload-tarxz-archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/commander.tar.xz
+          asset_name: commander.tar.xz
+          asset_content_type: application/x-gtar

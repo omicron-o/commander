@@ -1,0 +1,69 @@
+stages:
+  - test
+  - package
+  - release
+
+# Run the tests only on commits, never on tags for now this just builds the
+# release archives to make sure that works
+test:
+  stage: test
+  rules:
+    - if: $CI_COMMIT_BRANCH
+  image: alpine:3
+  before_script:
+    - echo PACKAGE_JOB_ID=$CI_JOB_ID >> package.env
+    - apk add xz 7zip make
+  script:
+    - make
+
+# Build the release archives and keep them forever as an artifact. Only runs on
+# tag pushes
+package:
+  stage: package
+  rules:
+    - if: $CI_COMMIT_TAG
+  image: alpine:3
+  before_script:
+    - echo PACKAGE_JOB_ID=$CI_JOB_ID >> package.env
+    - apk add xz 7zip make
+  script:
+    - make
+  image: alpine:3
+  before_script:
+    - echo PACKAGE_JOB_ID=$CI_JOB_ID >> package.env
+    - apk add xz 7zip make
+  script:
+    - make
+  artifacts:
+    expire_in: never
+    paths:
+      - release/commander.zip
+      - release/commander.tar.gz
+      - release/commander.tar.xz
+    reports:
+      dotenv: package.env
+
+# Create a release with the previously generated artifacts. Only runs on tag
+# pushes
+release:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_TAG
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - echo 'Creating release'
+  needs:
+    - job: package
+      artifacts: true
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: 'Commander $CI_COMMIT_TAG'
+    description: 'Commander $CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: 'Commander Addon (zip archive)'
+          url: 'https://gitlab.com/omicron-oss/wow/commander/-/jobs/${PACKAGE_JOB_ID}/artifacts/raw/release/commander.zip'
+        - name: 'Commander Addon (tar.xz archive)'
+          url: 'https://gitlab.com/omicron-oss/wow/commander/-/jobs/${PACKAGE_JOB_ID}/artifacts/raw/release/commander.tar.xz'
+        - name: 'Commander Addon (tar.gz archive)'
+          url: 'https://gitlab.com/omicron-oss/wow/commander/-/jobs/${PACKAGE_JOB_ID}/artifacts/raw/release/commander.tar.gz'
