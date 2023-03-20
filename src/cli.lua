@@ -46,6 +46,7 @@ function cli.RegisterCommand(name, command)
     end
     commands[name] = command
 end
+cmdr.public.RegisterCommand = cli.RegisterCommand
 
 function cli.SetFont(font, variant, size)
     local file = cli.fontFiles[font][variant]
@@ -155,19 +156,23 @@ function cli.PrintLn(...)
     end
     cli.outText:Insert("\n")
 end
+cmdr.public.PrintLn = cli.PrintLn
 
 function cli.DebugLn(...)
     cli.PrintLn("|cFFFFAC4ADebug:|r", ...)
 end
+cmdr.public.DebugLn = cli.DebugLn
 
 function cli.Printf(fmt, ...)
     local s = string.format(fmt, ...)
     cli.outText:Insert(s)
 end
+cmdr.public.Printf = cli.Printf
 
 function cli.Debugf(fmt, ...)
     cli.Printf("|cFFFFAC4ADebug:|r " .. fmt, ...)
 end
+cmdr.public.Debugf = cli.Debugf
 
 function cli.AddLine(line)
     cli.outText(line)
