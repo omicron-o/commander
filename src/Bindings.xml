@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="Show Commander" category="Commander" default="CTRL-Z">
+        Commander.ShowOrFocus()
+    </Binding>
+</Bindings>

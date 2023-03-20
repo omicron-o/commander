@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage: ${0} <WOW ADDON DIRECTORY>"
+    exit 1
+fi
+WOW_ADDON_DIR="${1}"
+
+if [[ ! -d "${WOW_ADDON_DIR}" ]]; then
+    echo "The directory does not exist. Please pass the correct addon directory."
+    exit 1
+fi
+
+# Every time the source or texture directory tree is changed, wait 1 second and
+# build the addon, then install it to the directory passed on the command line
+while true; do
+    inotifywait -qq -e modify,create,delete,move -r ./src ./media
+    sleep 1
+    echo $(date) Source changed. Building...
+    make -s build
+    echo $(date) Installing changes...
+    rsync -q -a ./build/Commander "${WOW_ADDON_DIR}/" --delete
+    echo $(date) Done.
+done
