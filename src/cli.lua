@@ -135,14 +135,55 @@ end
 cmdr.SetEventHandler("COMMANDER_LOADING", cli.CreateUI)
 
 function cli.HandleCLIEnter()
-    local input = cli.inText:GetText()
-    cli.PrintLn("|cFF009900>|r", input)
-    cli.AddHistoryLine(input)
+    local escaped = cli.inText:GetText()
+    local input = escaped:gsub("||", "|")
+    cli.PrintLn("|cFF009900>|r", escaped)
+    cli.AddHistoryLine(escaped)
     cli.inText:SetText("") 
-    input = Strip(input)
-    if input ~= "" and not HasPrefix(input, '#') then
-        cli.HandleCommand(input)
+
+    local script, err = parser.ParseInput(input)
+    if err ~= nil then
+        cli.PrintLn("|cFFFF0000Error:|r", err)
+        return
     end
+
+    cli.ExecuteScript(script)
+
+    -- Even next frame seems to not scroll it properly, this is hacky but it
+    -- works for now 
+    C_Timer.After(0.075, function()
+        cli.scroll:SetVerticalScroll(cli.scroll:GetVerticalScrollRange())
+    end)
+end
+
+function cli.ExecuteScript(script)
+    for _, pipeline in ipairs(script.pipelines) do
+        local err = cli.ExecutePipeline(pipeline)
+        if err then
+            return err
+        end
+    end
+end
+
+function cli.ExecutePipeline(pipeline)
+    for _, command in ipairs(pipeline.commands) do
+        local err = cli.ExecuteCommand(command)
+        if err then
+            cli.PrintLn("|cFFFF0000Error:|r", err)
+            return
+        end
+    end
+end
+
+function cli.ExecuteCommand(commandNode)
+    local name = commandNode.command
+    local args = commandNode.arguments
+    local command = commands[name]
+
+    if command == nil then
+        return string.format("command '%s' not found", name)
+    end
+    command.command(unpack(args))
 end
 
 function cli.PrintLn(...)
@@ -221,41 +262,6 @@ function cli.OnArrowPressed(key)
         cli.historyIndex = newIndex
         cli.inText:SetText("")
     end
-end
-local function parseInput(input)
-    local tokens = lexReduce(lexInput(input))
-    
-    -- For now all tokens must be of kind TEXT and the only valid parse trees
-    -- are just one command with optional arguments. No parsing needed (yet).
-    local command = tokens{0}
-end
-
-function cli.SplitCommand(input)
-    local command = nil
-    local arguments = {}
-    -- TODO: we probably want smarter splitting
-    for word in input:gmatch("%S+") do
-        if command then
-            table.insert(arguments, word)
-        else
-            command = word
-        end
-    end
-    return command, arguments
-end
-
-function cli.HandleCommand(input)
-    local command, arguments = cli.SplitCommand(input)
-    if commands[command] ~= nil then
-        commands[command].command(unpack(arguments))
-    else
-        cli.outText:Insert("|cFFFF0000Error:|r unknown command\n")
-    end
-    -- Even next frame seems to not scroll it properly, this is hacky but it
-    -- works for now (possibly this only happens when textures are involved)
-    C_Timer.After(0.05, function()
-        cli.scroll:SetVerticalScroll(cli.scroll:GetVerticalScrollRange())
-    end)
 end
 
 function cli.OnShow()
