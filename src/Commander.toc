@@ -9,8 +9,9 @@ main.lua
 util/string.lua
 
 data.lua
-cli.lua
 lexer.lua
+parser.lua
+cli.lua
 commands.lua
 
 init.lua
