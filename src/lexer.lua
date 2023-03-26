@@ -27,7 +27,7 @@ end
 -- and comments.
 -- 
 -- token = {
---      kind = "WORD", "QUOTED", "SPACE", "COMMENT", "EOF" or "ERROR"
+--      kind = "WORD", "QUOTED", "SPACE", "COMMENT", "PIPE", "SEMICOLON", "EOF" or "ERROR"
 --      value = value of the token
 --      start = start position of token
 --      stop = end position of token
@@ -58,7 +58,7 @@ function lexer.Lex(input)
         elseif firstChar == " " then
             token = lexToken("SPACE", "^%s+", input, pos)
         else
-            token = lexToken("WORD", "^[^ '\"#]+", input, pos)
+            token = lexToken("WORD", "^[^ '\"#;|]+", input, pos)
         end
         pos = token.stop + 1
         table.insert(tokens, token)
@@ -110,7 +110,7 @@ function lexer.Reduce(tokens)
         
         if token.kind == "WORD" or token.kind == "QUOTED" then
             current = lexMerge(current, token)
-        elseif token.kind == "EOF" then
+        elseif token.kind == "EOF" or token.kind == "PIPE" or token.kind == "SEMICOLON" then
             table.insert(reduced, token)
         elseif token.kind == "SPACE" or token.kind == "COMMENT" then
             -- ignore
