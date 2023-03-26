@@ -72,9 +72,15 @@ end
 -- token of type WORD or QUOTED. The merged token must be of type TEXT
 local function lexMerge(merged, token)
     if merged == nil then
+        local value
+        if token.kind == "QUOTED" then
+            value = token.value:sub(2, -2)
+        else
+            value = token.value
+        end
         return {
             kind = "TEXT",
-            value = token.value,
+            value = value,
             start = token.start,
             stop = token.stop
         }
@@ -98,7 +104,7 @@ function lexer.Reduce(tokens)
     for _, token in ipairs(tokens) do
         -- Push completed merged token into the reduced list
         if token.kind ~= "WORD" and token.kind ~= "QUOTED" and current ~= nil then
-            reduced = table.insert(reduced, token)
+            table.insert(reduced, current)
             current = nil
         end
         
