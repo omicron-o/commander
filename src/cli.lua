@@ -1,8 +1,8 @@
 -- Copyright 2023 <omicron.me@protonmail.com>
 -- Distributed under the MIT License
 local cmdr = select(2, ...)
-cmdr.cli = {}
-local cli = cmdr.cli
+local cli = cmdr.GetModule("cli")
+local parser = cmdr.GetModule("parser")
 local data = cmdr.data
 local Strip = cmdr.util.string.Strip
 local HasPrefix = cmdr.util.string.HasPrefix

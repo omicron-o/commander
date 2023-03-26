@@ -1,8 +1,8 @@
 -- Copyright 2023 <omicron.me@protonmail.com>
 -- Distributed under the MIT License
 local cmdr = select(2, ...)
-cmdr.cli.lexer = {}
-local lexer = cmdr.cli.lexer
+local lexer = cmdr.GetModule("lexer")
+local cli = cmdr.GetModule("cli")
 
 local function lexToken(kind, pattern, input, init)
     local start, stop = string.find(input, pattern, init)

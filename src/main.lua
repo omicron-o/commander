@@ -1,10 +1,27 @@
 -- Copyright 2023 <omicron.me@protonmail.com>
 -- Distributed under the MIT License
 local AddonName, cmdr = ...
-Commander = {}
 cmdr.events = {} -- event (str) to list of handlers
-cmdr.public = Commander
 cmdr.db = nil
+
+-- Gets existing or creates empty module
+function cmdr.GetModule(name)
+    if cmdr[name] == nil then
+        cmdr[name] = {}
+        -- module:Import(...) function to import individual symbols
+        cmdr[name].Import = function(self, ...)
+            local symols = {}
+            local n = select('#', ...)
+            for i=1,n do
+                local name = select(i, ...)
+                table.insert(symbols, self[name])
+            end
+            return unpack(symbols)
+        end
+    end
+    return cmdr[name]
+end
+Commander = cmdr.GetModule("public")
 
 -- Adds a given function to the event handler list for a given event
 -- This will later in the addon 

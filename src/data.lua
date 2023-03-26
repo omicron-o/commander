@@ -1,8 +1,7 @@
 -- Copyright 2023 <omicron.me@protonmail.com>
 -- Distributed under the MIT License
 local cmdr = select(2, ...)
-cmdr.data = {}
-local data = cmdr.data
+local data = cmdr.GetModule("data")
 
 -- Create a new DB
 function data.CreateDB()
