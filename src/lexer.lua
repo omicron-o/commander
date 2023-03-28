@@ -110,7 +110,11 @@ function lexer.Reduce(tokens)
         
         if token.kind == "WORD" or token.kind == "QUOTED" then
             current = lexMerge(current, token)
-        elseif token.kind == "EOF" or token.kind == "PIPE" or token.kind == "SEMICOLON" then
+        elseif token.kind == "EOF" or
+            token.kind == "PIPE" or
+            token.kind == "SEMICOLON" or
+            token.kind == "ERROR"
+        then
             table.insert(reduced, token)
         elseif token.kind == "SPACE" or token.kind == "COMMENT" then
             -- ignore
