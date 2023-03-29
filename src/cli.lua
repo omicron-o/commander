@@ -3,6 +3,7 @@
 local cmdr = select(2, ...)
 local cli = cmdr.GetModule("cli")
 local parser = cmdr.GetModule("parser")
+local lexer = cmdr.GetModule("lexer")
 local data = cmdr.data
 local Strip = cmdr.util.string.Strip
 local HasPrefix = cmdr.util.string.HasPrefix
@@ -40,10 +41,13 @@ cli.fontFiles = {
     }
 }
 
+cli.CommandsCompleteSequence = {}
 function cli.RegisterCommand(name, command)
     if commands[name] ~= nil then
         error("Command already registered")
     end
+    table.insert(cli.CommandsCompleteSequence, name)
+    table.sort(cli.CommandsCompleteSequence)
     commands[name] = command
 end
 cmdr.public.RegisterCommand = cli.RegisterCommand
@@ -130,6 +134,10 @@ function cli.CreateUI()
 
     cli.inText:SetScript("OnArrowPressed", function(self, key)
         cli.OnArrowPressed(key)
+    end)
+
+    cli.inText:SetScript("OnTabPressed", function(self)
+        cli.OnTabPressed()
     end)
 end
 cmdr.SetEventHandler("COMMANDER_LOADING", cli.CreateUI)
@@ -262,6 +270,104 @@ function cli.OnArrowPressed(key)
         cli.historyIndex = newIndex
         cli.inText:SetText("")
     end
+end
+
+
+-- Returns 3 values
+--    the string to be completed, may be ""
+--    the command this is an argument for, may be nil
+--    the list of arguments that to the command, may be {}
+local function GetPartialCommand(tokens, pos)
+    -- Find the token where our cursor is at, or the one just before if we
+    -- aren't in a token
+    local last = nil
+    for i, token in ipairs(tokens) do
+        if token.start > pos then
+            break
+        else
+            last = i
+        end
+    end
+    if last == nil then
+        return "", nil, {}
+    end
+
+    -- Find the command token (if it exists)
+    local first = nil
+    for i = last,1,-1 do
+        if tokens[i].kind == "TEXT" then
+            first = i
+        else
+            break
+        end
+    end
+    if first == nil then
+        return "", nil, {}
+    end
+    
+    -- FIXME: this will probably be weird for TEXT tokens that are combined
+    -- from QUOTED tokens
+    local lastToken = tokens[last]
+    local completionWord = ""
+    if pos <= lastToken.stop then
+        completionWord = lastToken.value:sub(1, pos-lastToken.start + 1)
+        last = last - 1
+    end
+    
+    -- We are completing the first word
+    if last < first then
+        return completionWord, nil, {}
+    end
+    
+    -- We are completing some argument, possibly the first one
+    args = {}
+    for i = first+1, last do
+        table.insert(args, tokens[i].value)
+    end
+
+    return completionWord, tokens[first].value, args
+end
+
+function cli.OnTabPressed()
+    local input = cli.inText:GetText():gsub("||", "|")
+    local tokens = lexer.Reduce(lexer.Lex(input))
+    local pos = cli.inText:GetCursorPosition()
+
+    local word, command, args = GetPartialCommand(tokens, pos)
+    if command == nil then
+        local completed = cli.CompleteFromSequence(word, cli.CommandsCompleteSequence)
+        if completed then
+            cli.inText:Insert(completed)
+        end
+    end
+end
+
+function cli.CommonPrefix(seq)
+    table.sort(seq)
+    local first = seq[1]
+    local last = seq[#seq]
+    local len = math.min(string.len(first), string.len(last))
+    local common = 0
+    while common < len and last:find(first:sub(1, common+1), 1, true) == 1 do
+        common = common + 1
+    end
+    return first:sub(1, common)
+end
+
+-- TODO: measure this, this might be too slow for long sequences, especially if
+-- we want to generate completetions automatically as you type
+function cli.CompleteFromSequence(word, sequence)
+    local matches = {}
+    for _, candidate in ipairs(sequence) do
+        if candidate:find(word, 1, true) == 1 then
+            table.insert(matches, candidate:sub(string.len(word)+1))
+        end
+    end
+    
+    if #matches == 0 then
+        return nil
+    end
+    return cli.CommonPrefix(matches), matches
 end
 
 function cli.OnShow()
