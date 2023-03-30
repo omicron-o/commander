@@ -18,7 +18,7 @@ build: clean
 	#cp -r $(MEDIA_DIR)/textures/*.tga $(BUILD_DIR)/Commander/textures/
 	cp -r $(MEDIA_DIR)/fonts $(BUILD_DIR)/Commander/media/fonts
 	cp LICENSE.md $(BUILD_DIR)/Commander/
-	#cp CHANGELOG.md $(BUILD_DIR)/Commander/
+	cp CHANGELOG.md $(BUILD_DIR)/Commander/
 
 release-zip: release
 	7z a -tzip $(RELEASE_DIR)/commander.zip -w $(BUILD_DIR)/.

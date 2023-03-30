@@ -2,7 +2,7 @@
 ## Title: Commander
 ## Notes: Trading and crafting data and calculation
 ## SavedVariables: CommanderDB
-## Version: 0.1.0-alpha
+## Version: 0.2.0-alpha
 
 main.lua
 
