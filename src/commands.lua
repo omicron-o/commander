@@ -27,6 +27,23 @@ cli.RegisterCommand("exit", {
 
 cli.RegisterCommand("font", {
     description="change the cli font",
+    completion=(function(word, args)
+        if #args == 0 then
+            local t = {}
+            for k, _ in pairs(cli.fontFiles) do
+                table.insert(t, k)
+            end
+            return t
+        elseif #args == 1 and cli.fontFiles[args[1]] then
+            local t = {}
+            for k, _ in pairs(cli.fontFiles[args[1]]) do
+                table.insert(t, k)
+            end
+            return t
+        else
+            return ""
+        end
+    end),
     command=(function(font, variant, size)
         if font == nil then
             cli.PrintLn("The following fonts and variants are available:")
