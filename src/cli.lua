@@ -339,6 +339,26 @@ function cli.OnTabPressed()
         if completed then
             cli.inText:Insert(completed)
         end
+    else
+        cli.CompleteForCommand(word, command, args)
+    end
+end
+
+function cli.CompleteForCommand(word, command, args)
+    if cli.commands[command] == nil then
+        return
+    end
+    command = cli.commands[command]
+    if command.completion then
+        local completed = command.completion(word, args)
+        if type(completed) == "string" then
+            cli.inText:Insert(completed)
+        elseif type(completed) == "table" then
+            completed = cli.CompleteFromSequence(word, completed)
+            if completed then
+                cli.inText:Insert(completed)
+            end
+        end
     end
 end
 
